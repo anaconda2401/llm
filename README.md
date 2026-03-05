@@ -104,7 +104,7 @@ curl -X POST [http://127.0.0.1:5000/chat](http://127.0.0.1:5000/chat) \
     {"role": "assistant", "content": "Hi there! How can I help you today?"}
   ],
   "long_memory": [
-    "User's name is Aswin",
+    "User's name is anaconda",
     "User likes Python",
     "User is building an AI assistant project"
   ]
