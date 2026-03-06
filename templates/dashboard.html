@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ella Assistant</title>
+    <style>
+        :root {
+            --bg-main: #ffffff;
+            --bg-sidebar: #f9f9f9;
+            --bg-input: #ffffff;
+            --text-main: #0d0d0d;
+            --text-muted: #6b7280;
+            --border-color: #e5e5e5;
+            --accent: #10a37f;
+            --accent-hover: #0e906f;
+            --user-avatar: #2563eb;
+            --ella-avatar: #10a37f;
+            --shadow: 0 0 15px rgba(0,0,0,0.1);
+        }
+
+        body.dark {
+            --bg-main: #212121;
+            --bg-sidebar: #171717;
+            --bg-input: #2f2f2f;
+            --text-main: #ececec;
+            --text-muted: #9ca3af;
+            --border-color: #424242;
+            --shadow: 0 0 15px rgba(0,0,0,0.5);
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            height: 100vh;
+            display: flex;
+            background: var(--bg-main);
+            color: var(--text-main);
+            transition: background 0.3s, color 0.3s;
+        }
+
+        /* Layout */
+        .container {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Header */
+        header {
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-main);
+            z-index: 10;
+        }
+
+        .brand {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        header button {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: 0.2s;
+        }
+
+        header button:hover {
+            background: var(--bg-sidebar);
+        }
+
+        /* Messages */
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-bottom: 120px; /* Space for input */
+            scroll-behavior: smooth;
+        }
+
+        .message-row {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            padding: 24px 0;
+        }
+
+        .message-content {
+            width: 100%;
+            max-width: 750px;
+            padding: 0 24px;
+            display: flex;
+            gap: 16px;
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .avatar.user { background: var(--user-avatar); }
+        .avatar.assistant { background: var(--ella-avatar); }
+
+        .message-body {
+            flex: 1;
+            font-size: 15px;
+            line-height: 1.6;
+            word-wrap: break-word;
+        }
+
+        .time {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        /* Input Area */
+        .input-wrapper {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 24px;
+            background: linear-gradient(180deg, transparent, var(--bg-main) 40%);
+            box-sizing: border-box;
+        }
+
+        .input-box {
+            width: 100%;
+            max-width: 750px;
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            padding: 4px;
+        }
+
+        textarea {
+            flex: 1;
+            max-height: 200px;
+            padding: 12px 48px 12px 16px;
+            border: none;
+            background: transparent;
+            color: var(--text-main);
+            outline: none;
+            resize: none;
+            font-family: inherit;
+            font-size: 15px;
+            line-height: 1.5;
+            overflow-y: auto;
+        }
+
+        textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        .send-btn {
+            position: absolute;
+            right: 8px;
+            bottom: 8px;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: none;
+            background: var(--accent);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .send-btn:hover { background: var(--accent-hover); }
+        .send-btn:disabled { background: var(--text-muted); cursor: not-allowed; opacity: 0.5; }
+
+        .typing {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            height: 18px;
+        }
+
+        /* Memory Sidebar */
+        .sidebar {
+            width: 350px;
+            background: var(--bg-sidebar);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-header h3 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .sidebar-actions button {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: 4px;
+            transition: 0.2s;
+        }
+        
+        .sidebar-actions button:hover {
+            background: var(--bg-main);
+        }
+
+        .sidebar-content {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+        }
+
+        pre {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 12px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            border-radius: 8px;
+            overflow-x: auto;
+            color: var(--text-main);
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin: 0;
+        }
+
+    </style>
+</head>
+<body id="body" class="dark">
+
+    <div class="container">
+        
+        <div class="chat-area">
+            <header>
+                <div class="brand">Ella Assistant</div>
+                <button onclick="toggleTheme()">Toggle Theme</button>
+            </header>
+
+            <div id="messages" class="messages">
+                </div>
+
+            <div class="input-wrapper">
+                <div id="typing" class="typing"></div>
+                <div class="input-box">
+                    <textarea id="msg" rows="1" placeholder="Message Ella..."></textarea>
+                    <button id="sendBtn" class="send-btn" onclick="send()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h3>Memory Context</h3>
+                <div class="sidebar-actions">
+                    <button onclick="loadMemory()">Refresh</button>
+                    <button onclick="clearMemory()">Clear</button>
+                </div>
+            </div>
+            <div class="sidebar-content">
+                <pre id="memory">Loading memory...</pre>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const API_KEY = "akfjf8vkks94n7g9dn";
+        const input = document.getElementById("msg");
+        const messages = document.getElementById("messages");
+        const typing = document.getElementById("typing");
+        const sendBtn = document.getElementById("sendBtn");
+
+        function scrollBottom() {
+            messages.scrollTo({
+                top: messages.scrollHeight,
+                behavior: "smooth"
+            });
+        }
+
+        function timestamp() {
+            let d = new Date();
+            return d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        }
+
+        function formatText(text) {
+            // Basic formatting to handle newlines
+            return text.replace(/\n/g, '<br>');
+        }
+
+        function addBubble(role, text) {
+            const isUser = role === "user";
+            const avatarLetter = isUser ? "U" : "E";
+            
+            let row = document.createElement("div");
+            row.className = "message-row";
+            
+            row.innerHTML = `
+                <div class="message-content">
+                    <div class="avatar ${role}">${avatarLetter}</div>
+                    <div class="message-body">
+                        <div>${formatText(text)}</div>
+                        <div class="time">${timestamp()}</div>
+                    </div>
+                </div>
+            `;
+
+            messages.appendChild(row);
+            scrollBottom();
+        }
+
+        function disableSend(state) {
+            sendBtn.disabled = state;
+        }
+
+        /* send message */
+        async function send() {
+            let text = input.value.trim();
+            if(!text) return;
+
+            addBubble("user", text);
+            input.value = "";
+            input.style.height = "auto"; // reset height
+
+            typing.innerHTML = "Ella is typing...";
+            disableSend(true);
+
+            try {
+                let res = await fetch("/chat", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-API-KEY": API_KEY
+                    },
+                    body: JSON.stringify({message: text})
+                });
+                
+                let data = await res.json();
+                typing.innerHTML = "";
+                addBubble("assistant", data.response);
+                
+                // Refresh memory automatically after a response
+                loadMemory();
+            } catch (error) {
+                typing.innerHTML = "Error connecting to server.";
+            }
+
+            disableSend(false);
+            input.focus();
+        }
+
+        /* Enter to send */
+        input.addEventListener("keydown", (e) => {
+            if(e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                send();
+            }
+        });
+
+        /* auto resize input */
+        input.addEventListener("input", () => {
+            input.style.height = "auto";
+            let newHeight = Math.min(input.scrollHeight, 200); // cap at 200px
+            input.style.height = newHeight + "px";
+        });
+
+        /* memory viewer */
+        async function loadMemory() {
+            try {
+                let res = await fetch("/memory", {
+                    headers: { "X-API-KEY": API_KEY }
+                });
+                let data = await res.json();
+                document.getElementById("memory").textContent = JSON.stringify(data, null, 2);
+            } catch(e) {
+                document.getElementById("memory").textContent = "Could not load memory.";
+            }
+        }
+
+        async function clearMemory() {
+            try {
+                await fetch("/memory/clear", {
+                    method: "POST",
+                    headers: { "X-API-KEY": API_KEY }
+                });
+                loadMemory();
+            } catch(e) {
+                console.error("Error clearing memory");
+            }
+        }
+
+        /* theme */
+        async function loadSettings() {
+            try {
+                let res = await fetch("/settings");
+                let s = await res.json();
+                if(s.theme) document.getElementById("body").className = s.theme;
+            } catch(e) {
+                // Ignore if settings endpoint isn't fully set up yet
+            }
+        }
+
+        async function toggleTheme() {
+            let current = document.getElementById("body").className;
+            let next = current === "dark" ? "light" : "dark";
+            
+            document.getElementById("body").className = next;
+
+            try {
+                await fetch("/settings", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({theme: next})
+                });
+            } catch(e) {}
+        }
+
+        // Initialize
+        loadSettings();
+        loadMemory();
+        input.focus();
+
+    </script>
+</body>
+</html>

@@ -1,13 +1,15 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify , render_template
 
 from config import ASSISTANT_API_KEY
-from memory.short_memory import add_message, get_memory
-from memory.long_memory import add_long_memory, get_long_memory
+from memory.short_memory import add_message, get_memory , clear_short_memory
+from memory.long_memory import add_long_memory, get_long_memory,clear_long_memory
 
-from memory.short_memory import clear_short_memory
-from memory.long_memory import clear_long_memory
 
 from llm import generate, extract_long_term_memory
+
+import json
+
+SETTINGS_FILE = "storage/settings.json"
 
 app = Flask(__name__)
 
@@ -135,6 +137,30 @@ def clear_memory():
     return jsonify({
         "status": "Memory cleared"
     })
+
+
+@app.route("/settings", methods=["GET"])
+def get_settings():
+
+    with open(SETTINGS_FILE) as f:
+        data = json.load(f)
+
+    return jsonify(data)
+
+
+@app.route("/settings", methods=["POST"])
+def update_settings():
+
+    data = request.json
+
+    with open(SETTINGS_FILE, "w") as f:
+        json.dump(data, f, indent=2)
+
+    return jsonify({"status": "updated"})
+
+@app.route("/dashboard")
+def dashboard():
+    return render_template("dashboard.html")
 
 
 if __name__ == "__main__":
