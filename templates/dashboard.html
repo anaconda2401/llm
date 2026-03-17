@@ -33,7 +33,7 @@
             margin: 0;
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             height: 100vh;
-            display: flex;
+            display: flex; /* This will be applied via JS once authenticated */
             background: var(--bg-main);
             color: var(--text-main);
             transition: background 0.3s, color 0.3s;
@@ -70,6 +70,11 @@
             font-size: 1.1rem;
         }
 
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
         header button {
             background: transparent;
             border: 1px solid var(--border-color);
@@ -83,6 +88,15 @@
 
         header button:hover {
             background: var(--bg-sidebar);
+        }
+
+        .sign-out-btn {
+            color: #ef4444 !important;
+            border-color: #ef4444 !important;
+        }
+
+        .sign-out-btn:hover {
+            background: rgba(239, 68, 68, 0.1) !important;
         }
 
         /* Messages */
@@ -274,18 +288,21 @@
 
     </style>
 </head>
-<body id="body" class="dark">
+<body id="body" class="dark" style="display: none;">
 
     <div class="container">
         
         <div class="chat-area">
             <header>
                 <div class="brand">Ella Assistant</div>
-                <button onclick="toggleTheme()">Toggle Theme</button>
+                <div class="header-actions">
+                    <button onclick="toggleTheme()">Toggle Theme</button>
+                    <button class="sign-out-btn" onclick="triggerLogout()">Sign Out</button>
+                </div>
             </header>
 
             <div id="messages" class="messages">
-                </div>
+            </div>
 
             <div class="input-wrapper">
                 <div id="typing" class="typing"></div>
@@ -317,6 +334,43 @@
     </div>
 
     <script>
+        // ==========================================
+        // AUTH VAULT GATEKEEPER
+        // ==========================================
+        const AUTH_VAULT_URL = "https://authvault.netlify.app";
+        const CURRENT_APP_URL = window.location.origin + window.location.pathname;
+
+        function enforceAuthentication() {
+            if (window.location.hash.includes('access_token=')) {
+                const params = new URLSearchParams(window.location.hash.substring(1));
+                const token = params.get('access_token');
+                if (token) {
+                    localStorage.setItem('auth_vault_token', token);
+                    window.history.replaceState(null, null, window.location.pathname);
+                }
+            }
+
+            const token = localStorage.getItem('auth_vault_token');
+            if (!token) {
+                // Instantly redirect to login if no token is found and halt execution
+                window.location.href = `${AUTH_VAULT_URL}/.netlify/functions/authorize?redirect_uri=${encodeURIComponent(CURRENT_APP_URL)}`;
+                return false;
+            }
+            
+            // Token found! Unhide the dashboard layout.
+            document.body.style.display = 'flex';
+            return true;
+        }
+
+        function triggerLogout() {
+            localStorage.removeItem('auth_vault_token');
+            window.location.href = `${AUTH_VAULT_URL}/.netlify/functions/logout?redirect_uri=${encodeURIComponent(CURRENT_APP_URL)}`;
+        }
+
+        // Run security check immediately and capture the status
+        const IS_AUTHENTICATED = enforceAuthentication();
+        // ==========================================
+
         const API_KEY = "akfjf8vkks94n7g9dn";
         const input = document.getElementById("msg");
         const messages = document.getElementById("messages");
@@ -336,7 +390,6 @@
         }
 
         function formatText(text) {
-            // Basic formatting to handle newlines
             return text.replace(/\n/g, '<br>');
         }
 
@@ -391,7 +444,6 @@
                 typing.innerHTML = "";
                 addBubble("assistant", data.response);
                 
-                // Refresh memory automatically after a response
                 loadMemory();
             } catch (error) {
                 typing.innerHTML = "Error connecting to server.";
@@ -447,9 +499,7 @@
                 let res = await fetch("/settings");
                 let s = await res.json();
                 if(s.theme) document.getElementById("body").className = s.theme;
-            } catch(e) {
-                // Ignore if settings endpoint isn't fully set up yet
-            }
+            } catch(e) {}
         }
 
         async function toggleTheme() {
@@ -467,10 +517,14 @@
             } catch(e) {}
         }
 
-        // Initialize
-        loadSettings();
-        loadMemory();
-        input.focus();
+        // ==========================================
+        // ONLY FETCH DATA IF AUTHENTICATED
+        // ==========================================
+        if (IS_AUTHENTICATED) {
+            loadSettings();
+            loadMemory();
+            input.focus();
+        }
 
     </script>
 </body>
