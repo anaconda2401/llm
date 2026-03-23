@@ -1,5 +1,5 @@
-Flask
+Flask==3.0.2
 groq
-python-dotenv
-PyJWT
-requests
+python-dotenv==1.0.1
+requests==2.31.0
+PyJWT[crypto]==2.8.0

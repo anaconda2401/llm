@@ -5,527 +5,166 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ella Assistant</title>
     <style>
-        :root {
-            --bg-main: #ffffff;
-            --bg-sidebar: #f9f9f9;
-            --bg-input: #ffffff;
-            --text-main: #0d0d0d;
-            --text-muted: #6b7280;
-            --border-color: #e5e5e5;
-            --accent: #10a37f;
-            --accent-hover: #0e906f;
-            --user-avatar: #2563eb;
-            --ella-avatar: #10a37f;
-            --shadow: 0 0 15px rgba(0,0,0,0.1);
-        }
-
-        body.dark {
-            --bg-main: #212121;
-            --bg-sidebar: #171717;
-            --bg-input: #2f2f2f;
-            --text-main: #ececec;
-            --text-muted: #9ca3af;
-            --border-color: #424242;
-            --shadow: 0 0 15px rgba(0,0,0,0.5);
-        }
-
-        body {
-            margin: 0;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            height: 100vh;
-            display: flex; /* This will be applied via JS once authenticated */
-            background: var(--bg-main);
-            color: var(--text-main);
-            transition: background 0.3s, color 0.3s;
-        }
-
-        /* Layout */
-        .container {
-            flex: 1;
-            display: flex;
-            overflow: hidden;
-            width: 100%;
-        }
-
-        .chat-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
-
-        /* Header */
-        header {
-            padding: 12px 24px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border-color);
-            background: var(--bg-main);
-            z-index: 10;
-        }
-
-        .brand {
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        header button {
-            background: transparent;
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            transition: 0.2s;
-        }
-
-        header button:hover {
-            background: var(--bg-sidebar);
-        }
-
-        .sign-out-btn {
-            color: #ef4444 !important;
-            border-color: #ef4444 !important;
-        }
-
-        .sign-out-btn:hover {
-            background: rgba(239, 68, 68, 0.1) !important;
-        }
-
-        /* Messages */
-        .messages {
-            flex: 1;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding-bottom: 120px; /* Space for input */
-            scroll-behavior: smooth;
-        }
-
-        .message-row {
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            padding: 24px 0;
-        }
-
-        .message-content {
-            width: 100%;
-            max-width: 750px;
-            padding: 0 24px;
-            display: flex;
-            gap: 16px;
-        }
-
-        .avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 14px;
-            flex-shrink: 0;
-        }
-
-        .avatar.user { background: var(--user-avatar); }
-        .avatar.assistant { background: var(--ella-avatar); }
-
-        .message-body {
-            flex: 1;
-            font-size: 15px;
-            line-height: 1.6;
-            word-wrap: break-word;
-        }
-
-        .time {
-            font-size: 11px;
-            color: var(--text-muted);
-            margin-top: 6px;
-        }
-
-        /* Input Area */
-        .input-wrapper {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 24px;
-            background: linear-gradient(180deg, transparent, var(--bg-main) 40%);
-            box-sizing: border-box;
-        }
-
-        .input-box {
-            width: 100%;
-            max-width: 750px;
-            position: relative;
-            display: flex;
-            align-items: flex-end;
-            background: var(--bg-input);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            box-shadow: var(--shadow);
-            padding: 4px;
-        }
-
-        textarea {
-            flex: 1;
-            max-height: 200px;
-            padding: 12px 48px 12px 16px;
-            border: none;
-            background: transparent;
-            color: var(--text-main);
-            outline: none;
-            resize: none;
-            font-family: inherit;
-            font-size: 15px;
-            line-height: 1.5;
-            overflow-y: auto;
-        }
-
-        textarea::placeholder {
-            color: var(--text-muted);
-        }
-
-        .send-btn {
-            position: absolute;
-            right: 8px;
-            bottom: 8px;
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            border: none;
-            background: var(--accent);
-            color: white;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.2s;
-        }
-
-        .send-btn:hover { background: var(--accent-hover); }
-        .send-btn:disabled { background: var(--text-muted); cursor: not-allowed; opacity: 0.5; }
-
-        .typing {
-            font-size: 13px;
-            color: var(--text-muted);
-            margin-bottom: 8px;
-            height: 18px;
-        }
-
-        /* Memory Sidebar */
-        .sidebar {
-            width: 350px;
-            background: var(--bg-sidebar);
-            border-left: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .sidebar-header {
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .sidebar-header h3 {
-            margin: 0;
-            font-size: 1rem;
-            font-weight: 600;
-        }
-
-        .sidebar-actions button {
-            background: transparent;
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            padding: 4px 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 12px;
-            margin-left: 4px;
-            transition: 0.2s;
-        }
+        /* Compacted CSS Variables & Themes */
+        :root { --bg: #fff; --sb: #f9f9f9; --in: #fff; --txt: #0d0d0d; --mut: #6b7280; --brd: #e5e5e5; --acc: #10a37f; }
+        body.dark { --bg: #212121; --sb: #171717; --in: #2f2f2f; --txt: #ececec; --mut: #9ca3af; --brd: #424242; }
         
-        .sidebar-actions button:hover {
-            background: var(--bg-main);
-        }
-
-        .sidebar-content {
-            flex: 1;
-            padding: 16px;
-            overflow-y: auto;
-        }
-
-        pre {
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 12px;
-            background: var(--bg-input);
-            border: 1px solid var(--border-color);
-            padding: 12px;
-            border-radius: 8px;
-            overflow-x: auto;
-            color: var(--text-main);
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            margin: 0;
-        }
-
+        /* Global & Layout */
+        body { margin: 0; font-family: system-ui, sans-serif; display: flex; height: 100vh; background: var(--bg); color: var(--txt); transition: .3s; }
+        .chat-area { flex: 1; display: flex; flex-direction: column; position: relative; }
+        .sidebar { width: 350px; background: var(--sb); border-left: 1px solid var(--brd); display: flex; flex-direction: column; }
+        header, .sb-hdr { padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--brd); }
+        
+        /* Buttons */
+        button { background: transparent; border: 1px solid var(--brd); color: var(--txt); padding: 6px 12px; border-radius: 6px; cursor: pointer; transition: .2s; }
+        button:hover { background: var(--sb); }
+        .btn-red { color: #ef4444; border-color: #ef4444; }
+        
+        /* Chat Messages */
+        #msgs { flex: 1; overflow-y: auto; padding-bottom: 120px; scroll-behavior: smooth; }
+        .msg-row { padding: 24px; display: flex; justify-content: center; }
+        .msg-box { width: 100%; max-width: 750px; display: flex; gap: 16px; padding: 0 24px; }
+        .ava { width: 32px; height: 32px; border-radius: 4px; color: #fff; font-weight: bold; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .ava.user { background: #2563eb; } .ava.assistant { background: var(--acc); }
+        .time { font-size: 11px; color: var(--mut); margin-top: 6px; }
+        
+        /* Input Area */
+        .input-wrap { position: absolute; bottom: 0; width: 100%; padding: 24px; display: flex; flex-direction: column; align-items: center; background: linear-gradient(180deg, transparent, var(--bg) 40%); box-sizing: border-box; }
+        .input-box { width: 100%; max-width: 750px; display: flex; background: var(--in); border: 1px solid var(--brd); border-radius: 16px; padding: 4px; position: relative; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
+        textarea { flex: 1; max-height: 200px; padding: 12px 48px 12px 16px; border: none; background: transparent; color: var(--txt); outline: none; resize: none; font-family: inherit; font-size: 15px; line-height: 1.5; }
+        .send-btn { position: absolute; right: 8px; bottom: 8px; width: 32px; height: 32px; background: var(--acc); color: #fff; border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .typing:empty { display: none; } .typing { font-size: 13px; color: var(--mut); margin-bottom: 8px; }
+        
+        /* Memory Panel */
+        pre { background: var(--in); border: 1px solid var(--brd); padding: 12px; border-radius: 8px; font-size: 12px; margin: 16px; overflow-y: auto; white-space: pre-wrap; word-break: break-word; flex: 1; }
     </style>
 </head>
 <body id="body" class="dark" style="display: none;">
-
-    <div class="container">
-        
-        <div class="chat-area">
-            <header>
-                <div class="brand">Ella Assistant</div>
-                <div class="header-actions">
-                    <button onclick="toggleTheme()">Toggle Theme</button>
-                    <button class="sign-out-btn" onclick="triggerLogout()">Sign Out</button>
-                </div>
-            </header>
-
-            <div id="messages" class="messages">
+    <div class="chat-area">
+        <header>
+            <b>Ella Assistant</b>
+            <div>
+                <button onclick="toggleTheme()">Theme</button>
+                <button class="btn-red" onclick="triggerLogout()">Sign Out</button>
             </div>
-
-            <div class="input-wrapper">
-                <div id="typing" class="typing"></div>
-                <div class="input-box">
-                    <textarea id="msg" rows="1" placeholder="Message Ella..."></textarea>
-                    <button id="sendBtn" class="send-btn" onclick="send()">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="22" y1="2" x2="11" y2="13"></line>
-                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                        </svg>
-                    </button>
-                </div>
+        </header>
+        <div id="msgs"></div>
+        <div class="input-wrap">
+            <div id="typing" class="typing"></div>
+            <div class="input-box">
+                <textarea id="msg" rows="1" placeholder="Message Ella..."></textarea>
+                <button id="sendBtn" class="send-btn" onclick="send()">➤</button>
             </div>
         </div>
-
-        <div class="sidebar">
-            <div class="sidebar-header">
-                <h3>Memory Context</h3>
-                <div class="sidebar-actions">
-                    <button onclick="loadMemory()">Refresh</button>
-                    <button onclick="clearMemory()">Clear</button>
-                </div>
-            </div>
-            <div class="sidebar-content">
-                <pre id="memory">Loading memory...</pre>
+    </div>
+    
+    <div class="sidebar">
+        <div class="sb-hdr">
+            <b>Memory Context</b>
+            <div>
+                <button onclick="loadMem()">Refresh</button>
+                <button onclick="req('/memory/clear', 'POST').then(loadMem)">Clear</button>
             </div>
         </div>
-
+        <pre id="memory">Loading...</pre>
     </div>
 
     <script>
-        // ==========================================
-        // AUTH VAULT GATEKEEPER
-        // ==========================================
-        const AUTH_VAULT_URL = "https://authvault.netlify.app";
-        const CURRENT_APP_URL = window.location.origin + window.location.pathname;
+        // 1. DOM Elements
+        const el = id => document.getElementById(id);
+        const msgInput = el("msg"), msgs = el("msgs"), typing = el("typing"), sendBtn = el("sendBtn");
 
-        function enforceAuthentication() {
-            if (window.location.hash.includes('access_token=')) {
-                const params = new URLSearchParams(window.location.hash.substring(1));
-                const token = params.get('access_token');
-                if (token) {
-                    localStorage.setItem('auth_vault_token', token);
-                    window.history.replaceState(null, null, window.location.pathname);
-                }
-            }
-
-            const token = localStorage.getItem('auth_vault_token');
-            if (!token) {
-                // Instantly redirect to login if no token is found and halt execution
-                window.location.href = `${AUTH_VAULT_URL}/.netlify/functions/authorize?redirect_uri=${encodeURIComponent(CURRENT_APP_URL)}`;
-                return false;
-            }
-            
-            // Token found! Unhide the dashboard layout.
+        // 2. Auth Vault Gatekeeper
+        const AUTH_URL = "https://authvault.netlify.app"; // Update if using a custom Netlify URL
+        const APP_URL = window.location.origin + window.location.pathname;
+        
+        if (window.location.hash.includes('access_token=')) {
+            localStorage.setItem('auth_vault_token', new URLSearchParams(window.location.hash.substring(1)).get('access_token'));
+            window.history.replaceState(null, null, window.location.pathname);
+        }
+        
+        if (!localStorage.getItem('auth_vault_token')) {
+            window.location.href = `${AUTH_URL}/.netlify/functions/authorize?redirect_uri=${encodeURIComponent(APP_URL)}`;
+        } else {
             document.body.style.display = 'flex';
-            return true;
+            init(); // Safe to call now
         }
 
         function triggerLogout() {
             localStorage.removeItem('auth_vault_token');
-            window.location.href = `${AUTH_VAULT_URL}/.netlify/functions/logout?redirect_uri=${encodeURIComponent(CURRENT_APP_URL)}`;
+            window.location.href = `${AUTH_URL}/.netlify/functions/logout?redirect_uri=${encodeURIComponent(APP_URL)}`;
         }
 
-        // Run security check immediately and capture the status
-        const IS_AUTHENTICATED = enforceAuthentication();
-        // ==========================================
-
-        const API_KEY = "akfjf8vkks94n7g9dn";
-        const input = document.getElementById("msg");
-        const messages = document.getElementById("messages");
-        const typing = document.getElementById("typing");
-        const sendBtn = document.getElementById("sendBtn");
-
-        function scrollBottom() {
-            messages.scrollTo({
-                top: messages.scrollHeight,
-                behavior: "smooth"
-            });
-        }
-
-        function timestamp() {
-            let d = new Date();
-            return d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        }
-
-        function formatText(text) {
-            return text.replace(/\n/g, '<br>');
+        // 3. Core Logic
+        async function req(path, method="GET", body=null) {
+            let opts = { method, headers: { "Content-Type": "application/json", "Authorization": `Bearer ${localStorage.getItem('auth_vault_token')}` }};
+            if (body) opts.body = JSON.stringify(body);
+            let r = await fetch(path, opts);
+            if (!r.ok) throw new Error("API Error");
+            return r.json();
         }
 
         function addBubble(role, text) {
-            const isUser = role === "user";
-            const avatarLetter = isUser ? "U" : "E";
-            
-            let row = document.createElement("div");
-            row.className = "message-row";
-            
-            row.innerHTML = `
-                <div class="message-content">
-                    <div class="avatar ${role}">${avatarLetter}</div>
-                    <div class="message-body">
-                        <div>${formatText(text)}</div>
-                        <div class="time">${timestamp()}</div>
+            let time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            msgs.insertAdjacentHTML("beforeend", `
+                <div class="msg-row">
+                    <div class="msg-box">
+                        <div class="ava ${role}">${role === 'user' ? 'U' : 'E'}</div>
+                        <div style="flex:1; font-size:15px; line-height:1.6;">
+                            <div>${text.replace(/\n/g, '<br>')}</div>
+                            <div class="time">${time}</div>
+                        </div>
                     </div>
-                </div>
-            `;
-
-            messages.appendChild(row);
-            scrollBottom();
+                </div>`);
+            msgs.scrollTo({ top: msgs.scrollHeight, behavior: "smooth" });
         }
 
-        function disableSend(state) {
-            sendBtn.disabled = state;
-        }
-
-        /* send message */
         async function send() {
-            let text = input.value.trim();
-            if(!text) return;
-
+            let text = msgInput.value.trim();
+            if (!text) return;
+            
             addBubble("user", text);
-            input.value = "";
-            input.style.height = "auto"; // reset height
-
-            typing.innerHTML = "Ella is typing...";
-            disableSend(true);
-
+            msgInput.value = ""; msgInput.style.height = "auto";
+            typing.innerText = "Ella is typing..."; sendBtn.disabled = true;
+            
             try {
-                let res = await fetch("/chat", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-API-KEY": API_KEY
-                    },
-                    body: JSON.stringify({message: text})
-                });
-                
-                let data = await res.json();
-                typing.innerHTML = "";
-                addBubble("assistant", data.response);
-                
-                loadMemory();
-            } catch (error) {
-                typing.innerHTML = "Error connecting to server.";
-            }
-
-            disableSend(false);
-            input.focus();
+                let res = await req("/chat", "POST", { message: text });
+                addBubble("assistant", res.response);
+                loadMem();
+            } catch (e) { typing.innerText = "Error connecting to server."; }
+            
+            if(typing.innerText === "Ella is typing...") typing.innerText = "";
+            sendBtn.disabled = false; msgInput.focus();
         }
 
-        /* Enter to send */
-        input.addEventListener("keydown", (e) => {
-            if(e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                send();
-            }
-        });
-
-        /* auto resize input */
-        input.addEventListener("input", () => {
-            input.style.height = "auto";
-            let newHeight = Math.min(input.scrollHeight, 200); // cap at 200px
-            input.style.height = newHeight + "px";
-        });
-
-        /* memory viewer */
-        async function loadMemory() {
+        async function loadMem() {
             try {
-                let res = await fetch("/memory", {
-                    headers: { "X-API-KEY": API_KEY }
-                });
-                let data = await res.json();
-                document.getElementById("memory").textContent = JSON.stringify(data, null, 2);
-            } catch(e) {
-                document.getElementById("memory").textContent = "Could not load memory.";
-            }
-        }
-
-        async function clearMemory() {
-            try {
-                await fetch("/memory/clear", {
-                    method: "POST",
-                    headers: { "X-API-KEY": API_KEY }
-                });
-                loadMemory();
-            } catch(e) {
-                console.error("Error clearing memory");
-            }
-        }
-
-        /* theme */
-        async function loadSettings() {
-            try {
-                let res = await fetch("/settings");
-                let s = await res.json();
-                if(s.theme) document.getElementById("body").className = s.theme;
-            } catch(e) {}
+                let data = await req("/memory");
+                el("memory").textContent = JSON.stringify(data, null, 2);
+            } catch(e) { el("memory").textContent = "Error loading memory."; }
         }
 
         async function toggleTheme() {
-            let current = document.getElementById("body").className;
-            let next = current === "dark" ? "light" : "dark";
-            
-            document.getElementById("body").className = next;
-
-            try {
-                await fetch("/settings", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({theme: next})
-                });
-            } catch(e) {}
+            let next = document.body.className === "dark" ? "light" : "dark";
+            document.body.className = next;
+            try { await req("/settings", "POST", { theme: next }); } catch(e) {}
         }
 
-        // ==========================================
-        // ONLY FETCH DATA IF AUTHENTICATED
-        // ==========================================
-        if (IS_AUTHENTICATED) {
-            loadSettings();
-            loadMemory();
-            input.focus();
+        function init() {
+            fetch("/settings").then(r => r.json()).then(s => { if(s.theme) document.body.className = s.theme; }).catch(()=>{});
+            loadMem();
+            msgInput.focus();
         }
 
+        // 4. Listeners
+        msgInput.addEventListener("keydown", e => {
+            if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+        });
+        msgInput.addEventListener("input", () => {
+            msgInput.style.height = "auto";
+            msgInput.style.height = Math.min(msgInput.scrollHeight, 200) + "px";
+        });
     </script>
 </body>
 </html>
