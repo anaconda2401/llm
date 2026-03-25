@@ -3,11 +3,10 @@ import jwt
 import threading
 import json
 
-from config import AUTH_VAULT_PUBLIC_KEY
+from config import AUTH_VAULT_PUBLIC_KEY, PUBLIC_API_KEY, SHARE_PUBLIC_MEMORY
 from memory.short_memory import add_message, get_memory, clear_short_memory
 from memory.long_memory import add_long_memory, get_long_memory, clear_long_memory
 from llm import generate, extract_long_term_memory
-from config import PUBLIC_API_KEY
 
 SETTINGS_FILE = "storage/settings.json"
 
@@ -156,7 +155,7 @@ def verify_public_api_key(req):
 
 @app.route("/api/chat", methods=["POST"])
 def public_chat():
-    """Stateless endpoint for programmatic access."""
+    """Stateless OR Stateful endpoint for programmatic access, based on config."""
     if not verify_public_api_key(request):
         return jsonify({"error": "Invalid or missing API Key"}), 401
 
@@ -166,14 +165,39 @@ def public_chat():
     if not user_input:
         return jsonify({"error": "Message required"}), 400
 
-    # For the public API, we skip saving to short/long term memory
-    # to avoid cluttering your personal dashboard with API tests.
-    messages = [
-        SYSTEM_PROMPT,
-        {"role": "user", "content": user_input}
-    ]
+    if SHARE_PUBLIC_MEMORY:
+        # --- STATEFUL MODE (Shares memory with Dashboard) ---
+        add_message("user", user_input)
 
-    response = generate(messages)
+        def process_memory(msg):
+            fact = extract_long_term_memory(msg)
+            if fact:
+                add_long_memory(fact)
+
+        threading.Thread(target=process_memory, args=(user_input,)).start()
+
+        short_memory = get_memory()
+        long_memory = get_long_memory()
+        memory_text = "\n".join(long_memory)
+
+        messages = [
+            SYSTEM_PROMPT,
+            {
+                "role": "system",
+                "content": f"Long-term memory about the user:\n\n{memory_text}\n\nUse this information when relevant."
+            }
+        ] + short_memory
+
+        response = generate(messages)
+        add_message("assistant", response)
+
+    else:
+        # --- STATELESS MODE (Clean slate, no memory writing) ---
+        messages = [
+            SYSTEM_PROMPT,
+            {"role": "user", "content": user_input}
+        ]
+        response = generate(messages)
 
     return jsonify({
         "response": response
