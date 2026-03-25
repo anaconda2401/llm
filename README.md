@@ -20,8 +20,9 @@ Ella features a dedicated persona, short-term conversational context, and dynami
     * *Long-term:* Dynamically extracts and stores persistent user facts.
 * **🚀 Non-Blocking Performance:** Memory extraction runs in a background thread, ensuring instant chat responses without double-LLM latency.
 * **🔐 Auth Vault SSO:** Web endpoints are locked behind asymmetric RS256 JWT validation, fully integrated with a centralized Netlify/Supabase authentication vault.
+* **🔀 Stateful/Stateless API Toggle:** Configure external tools to either share memory with the web dashboard or run in a clean, stateless sandbox.
 * **🚦 Thread-Safe Storage:** Custom threading locks prevent JSON file corruption during concurrent read/writes.
-* **🔌 Dedicated Scripting API:** Separate stateless endpoint utilizing a static API key for secure CLI and terminal integration.
+* **🔌 Dedicated Scripting API:** Separate endpoint utilizing a static API key for secure CLI and terminal integration without exposing memory-management endpoints.
 
 ---
 
@@ -35,6 +36,8 @@ User ──> [ Auth Vault ] ──(JWT)──> [ Flask Web API ] ──> [ Groq 
 
 2. CLI / SCRIPT FLOW (Static Key)
 CLI Tool ──(X-API-KEY)──> [ Flask Public API ] ──> [ Groq LLM ]
+                                          │
+                                          └──> (Optional via .env) ──> Reads/Writes Shared Dashboard Memory
 ```
 
 ---
@@ -74,6 +77,7 @@ Create a `.env` file in the root directory. You will need your Groq key, your st
 ```env
 GROQ_API_KEY="gsk_xxxxxxxxxxxxxxxxx"
 PUBLIC_API_KEY="your_super_secret_scripting_key"
+SHARE_PUBLIC_MEMORY="True" # Set to False for stateless CLI
 
 AUTH_VAULT_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----
 YOUR_AUTH_VAULT_PUBLIC_KEY_HERE
@@ -107,15 +111,16 @@ The API is split into two security tiers: Web UI (JWT) and Programmatic (Static 
 
 | Endpoint | Method | Description |
 | :--- | :---: | :--- |
-| `/api/chat` | `POST` | Stateless chat endpoint. Does **not** read or write to the JSON memory storage, keeping terminal tests out of your personal dashboard context. |
+| `/api/chat` | `POST` | Chat endpoint for external scripts. Stateful or stateless depending on the `SHARE_PUBLIC_MEMORY` environment variable. |
 
 #### Example Request: Terminal Integration
 ```bash
-curl -X POST [http://127.0.0.1:5000/api/chat](http://127.0.0.1:5000/api/chat) \
+curl -X POST http://127.0.0.1:5000/api/chat \
   -H "Content-Type: application/json" \
   -H "X-API-KEY: your_super_secret_scripting_key" \
   -d '{"message":"Hello from the terminal!"}'
 ```
+*(If testing natively in Windows PowerShell, use `Invoke-RestMethod` instead of `curl` to handle JSON quote parsing correctly).*
 
 ---
 
