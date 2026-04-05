@@ -2,24 +2,35 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Ella Assistant</title>
     <style>
         /* Compacted CSS Variables & Themes */
-        :root { --bg: #fff; --sb: #f9f9f9; --in: #fff; --txt: #0d0d0d; --mut: #6b7280; --brd: #e5e5e5; --acc: #10a37f; }
+        :root { --bg: #fff; --sb: #f9f9f9; --in: #fff; --txt: #0d0d0d; --mut: #6b7280; --brd: #e5e5e5; --acc: #10a37f; --danger: #ef4444; }
         body.dark { --bg: #212121; --sb: #171717; --in: #2f2f2f; --txt: #ececec; --mut: #9ca3af; --brd: #424242; }
         
         /* Global & Layout */
-        body { margin: 0; font-family: system-ui, sans-serif; display: flex; height: 100vh; background: var(--bg); color: var(--txt); transition: .3s; }
-        .chat-area { flex: 1; display: flex; flex-direction: column; position: relative; }
-        .sidebar { width: 350px; background: var(--sb); border-left: 1px solid var(--brd); display: flex; flex-direction: column; }
-        header, .sb-hdr { padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--brd); }
+        body { margin: 0; font-family: system-ui, sans-serif; display: flex; height: 100vh; height: 100dvh; background: var(--bg); color: var(--txt); transition: .3s; overflow: hidden; }
+        .chat-area { flex: 1; display: flex; flex-direction: column; position: relative; width: 100%; }
         
-        /* Buttons */
-        button { background: transparent; border: 1px solid var(--brd); color: var(--txt); padding: 6px 12px; border-radius: 6px; cursor: pointer; transition: .2s; }
-        button:hover { background: var(--sb); }
-        .btn-red { color: #ef4444; border-color: #ef4444; }
+        /* Sidebar (Memory) */
+        .sidebar { width: 350px; background: var(--sb); border-left: 1px solid var(--brd); display: flex; flex-direction: column; transition: transform 0.3s ease; z-index: 20; }
+        .sb-hdr { padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--brd); gap: 10px; flex-wrap: wrap; }
         
+        /* Header Desktop */
+        header { padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--brd); gap: 16px; }
+        .top-bar { display: flex; align-items: center; justify-content: space-between; }
+        .header-controls { display: flex; gap: 8px; align-items: center; }
+
+        /* Buttons & Controls */
+        button { background: transparent; border: 1px solid var(--brd); color: var(--txt); padding: 6px 12px; border-radius: 6px; cursor: pointer; transition: .2s; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 13px; }
+        button:hover { background: var(--brd); }
+        .btn-red { color: var(--danger); border-color: var(--danger); }
+        
+        .icon-btn { border: none; font-size: 18px; padding: 6px; }
+        .icon-btn.active { color: var(--acc); }
+        .voice-select { background: var(--in); color: var(--txt); border: 1px solid var(--brd); padding: 6px; border-radius: 6px; font-size: 12px; max-width: 150px; outline: none; text-overflow: ellipsis; }
+
         /* Chat Messages */
         #msgs { flex: 1; overflow-y: auto; padding-bottom: 120px; scroll-behavior: smooth; }
         .msg-row { padding: 24px; display: flex; justify-content: center; }
@@ -30,22 +41,59 @@
         
         /* Input Area */
         .input-wrap { position: absolute; bottom: 0; width: 100%; padding: 24px; display: flex; flex-direction: column; align-items: center; background: linear-gradient(180deg, transparent, var(--bg) 40%); box-sizing: border-box; }
-        .input-box { width: 100%; max-width: 750px; display: flex; background: var(--in); border: 1px solid var(--brd); border-radius: 16px; padding: 4px; position: relative; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
-        textarea { flex: 1; max-height: 200px; padding: 12px 48px 12px 16px; border: none; background: transparent; color: var(--txt); outline: none; resize: none; font-family: inherit; font-size: 15px; line-height: 1.5; }
-        .send-btn { position: absolute; right: 8px; bottom: 8px; width: 32px; height: 32px; background: var(--acc); color: #fff; border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .input-box { width: 100%; max-width: 750px; display: flex; align-items: flex-end; background: var(--in); border: 1px solid var(--brd); border-radius: 16px; padding: 8px; position: relative; box-shadow: 0 0 15px rgba(0,0,0,0.1); gap: 8px; }
+        
+        textarea { flex: 1; max-height: 200px; padding: 8px; border: none; background: transparent; color: var(--txt); outline: none; resize: none; font-family: inherit; font-size: 15px; line-height: 1.5; }
+        
+        .action-btn { width: 36px; height: 36px; border-radius: 8px; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: .2s; }
+        .mic-btn { background: var(--sb); color: var(--txt); border: 1px solid var(--brd); }
+        .mic-btn.recording { background: var(--danger); color: white; animation: pulse 1.5s infinite; border-color: var(--danger); }
+        .send-btn { background: var(--acc); color: #fff; margin-bottom: 2px; }
         .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
         .typing:empty { display: none; } .typing { font-size: 13px; color: var(--mut); margin-bottom: 8px; }
         
         /* Memory Panel */
         pre { background: var(--in); border: 1px solid var(--brd); padding: 12px; border-radius: 8px; font-size: 12px; margin: 16px; overflow-y: auto; white-space: pre-wrap; word-break: break-word; flex: 1; }
+
+        .mobile-menu-btn { display: none; }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        /* Mobile Responsive View */
+        @media (max-width: 768px) {
+            .mobile-menu-btn { display: flex; }
+            .sidebar { position: fixed; right: 0; top: 0; height: 100%; transform: translateX(100%); box-shadow: -4px 0 15px rgba(0,0,0,0.2); }
+            .sidebar.active { transform: translateX(0); }
+            .msg-row { padding: 16px 0; }
+            .msg-box { padding: 0 16px; }
+            .input-wrap { padding: 12px; }
+            
+            /* Fixed Header for Mobile */
+            header { flex-direction: column; align-items: stretch; gap: 12px; padding: 12px 16px; }
+            .top-bar { width: 100%; }
+            .header-controls { width: 100%; justify-content: space-between; }
+            .voice-select { flex: 1; max-width: none; } /* Lets the dropdown fill empty space gracefully */
+        }
     </style>
 </head>
 <body id="body" class="dark" style="display: none;">
     <div class="chat-area">
         <header>
-            <b>Ella Assistant</b>
-            <div>
-                <button onclick="toggleTheme()">Theme</button>
+            <div class="top-bar">
+                <b>Ella Assistant</b>
+                <button class="mobile-menu-btn" onclick="toggleSidebar()">🧠 Memory</button>
+            </div>
+            <div class="header-controls">
+                <select id="voiceSelect" class="voice-select">
+                    <option value="">Loading voices...</option>
+                </select>
+                <button id="ttsToggle" class="icon-btn active" title="Toggle AI Voice">🔊</button>
+                <button onclick="toggleTheme()" class="icon-btn" title="Toggle Theme">🌗</button>
                 <button class="btn-red" onclick="triggerLogout()">Sign Out</button>
             </div>
         </header>
@@ -53,56 +101,57 @@
         <div class="input-wrap">
             <div id="typing" class="typing"></div>
             <div class="input-box">
+                <button type="button" id="micBtn" class="action-btn mic-btn" title="Speak">🎤</button>
                 <textarea id="msg" rows="1" placeholder="Message Ella..."></textarea>
-                <button id="sendBtn" class="send-btn" onclick="send()">➤</button>
+                <button id="sendBtn" class="action-btn send-btn" onclick="send()">➤</button>
             </div>
         </div>
     </div>
     
-    <div class="sidebar">
+    <div class="sidebar" id="sidebar">
         <div class="sb-hdr">
             <b>Memory Context</b>
-            <div>
+            <div style="display: flex; gap: 8px;">
+                <button class="mobile-menu-btn" onclick="toggleSidebar()">✕</button>
                 <button onclick="loadMem()">Refresh</button>
-                <button onclick="req('/memory/clear', 'POST').then(loadMem)">Clear</button>
+                <button class="btn-red" onclick="req('/memory/clear', 'POST').then(loadMem)">Clear</button>
             </div>
         </div>
         <pre id="memory">Loading...</pre>
     </div>
 
     <script>
-        // 1. DOM Elements
+        // ----------------------------------------------------
+        // 1. DOM Elements & State Variables
+        // ----------------------------------------------------
         const el = id => document.getElementById(id);
         const msgInput = el("msg"), msgs = el("msgs"), typing = el("typing"), sendBtn = el("sendBtn");
+        const micBtn = el("micBtn"), ttsToggle = el("ttsToggle"), voiceSelect = el("voiceSelect"), sidebar = el("sidebar");
 
-        // 2. Auth Vault Gatekeeper
-        const AUTH_URL = "https://authvault.netlify.app"; // Update if using a custom Netlify URL
-        const APP_URL = window.location.origin + window.location.pathname;
-        
-        if (window.location.hash.includes('access_token=')) {
-            localStorage.setItem('auth_vault_token', new URLSearchParams(window.location.hash.substring(1)).get('access_token'));
-            window.history.replaceState(null, null, window.location.pathname);
-        }
-        
-        if (!localStorage.getItem('auth_vault_token')) {
-            window.location.href = `${AUTH_URL}/.netlify/functions/authorize?redirect_uri=${encodeURIComponent(APP_URL)}`;
-        } else {
-            document.body.style.display = 'flex';
-            init(); // Safe to call now
-        }
+        let isTtsEnabled = true;
+        let availableVoices = [];
+        let selectedVoiceIndex = 0;
+        let ttsUnlocked = false;
 
-        function triggerLogout() {
-            localStorage.removeItem('auth_vault_token');
-            window.location.href = `${AUTH_URL}/.netlify/functions/logout?redirect_uri=${encodeURIComponent(APP_URL)}`;
-        }
-
-        // 3. Core Logic
+        // ----------------------------------------------------
+        // 2. Core Network & UI Logic
+        // ----------------------------------------------------
         async function req(path, method="GET", body=null) {
-            let opts = { method, headers: { "Content-Type": "application/json", "Authorization": `Bearer ${localStorage.getItem('auth_vault_token')}` }};
+            let opts = { 
+                method, 
+                headers: { 
+                    "Content-Type": "application/json", 
+                    "Authorization": `Bearer ${localStorage.getItem('auth_vault_token')}` 
+                }
+            };
             if (body) opts.body = JSON.stringify(body);
             let r = await fetch(path, opts);
             if (!r.ok) throw new Error("API Error");
             return r.json();
+        }
+
+        function toggleSidebar() {
+            sidebar.classList.toggle("active");
         }
 
         function addBubble(role, text) {
@@ -126,16 +175,21 @@
             
             addBubble("user", text);
             msgInput.value = ""; msgInput.style.height = "auto";
+            if (!window.matchMedia("(pointer: coarse)").matches) msgInput.focus();
+            
             typing.innerText = "Ella is typing..."; sendBtn.disabled = true;
             
             try {
                 let res = await req("/chat", "POST", { message: text });
                 addBubble("assistant", res.response);
+                speakText(res.response); // Trigger TTS here
                 loadMem();
-            } catch (e) { typing.innerText = "Error connecting to server."; }
+            } catch (e) { 
+                typing.innerText = "Error connecting to server."; 
+            }
             
             if(typing.innerText === "Ella is typing...") typing.innerText = "";
-            sendBtn.disabled = false; msgInput.focus();
+            sendBtn.disabled = false;
         }
 
         async function loadMem() {
@@ -151,13 +205,107 @@
             try { await req("/settings", "POST", { theme: next }); } catch(e) {}
         }
 
-        function init() {
-            fetch("/settings").then(r => r.json()).then(s => { if(s.theme) document.body.className = s.theme; }).catch(()=>{});
-            loadMem();
-            msgInput.focus();
+        // ----------------------------------------------------
+        // 3. TTS (Text-to-Speech) Functions
+        // ----------------------------------------------------
+        function unlockAudioContext() {
+            if (!ttsUnlocked && 'speechSynthesis' in window) {
+                const silent = new SpeechSynthesisUtterance('');
+                window.speechSynthesis.speak(silent);
+                ttsUnlocked = true;
+                document.removeEventListener('touchstart', unlockAudioContext);
+                document.removeEventListener('click', unlockAudioContext);
+            }
+        }
+        document.addEventListener('touchstart', unlockAudioContext);
+        document.addEventListener('click', unlockAudioContext);
+
+        ttsToggle.addEventListener("click", () => {
+            isTtsEnabled = !isTtsEnabled;
+            ttsToggle.classList.toggle("active", isTtsEnabled);
+            ttsToggle.textContent = isTtsEnabled ? "🔊" : "🔇";
+            if (!isTtsEnabled) window.speechSynthesis.cancel(); 
+        });
+
+        function populateVoiceList() {
+            availableVoices = window.speechSynthesis.getVoices();
+            voiceSelect.innerHTML = '';
+            if (availableVoices.length === 0) {
+                voiceSelect.innerHTML = '<option value="">No voices available</option>';
+                return;
+            }
+
+            let defaultSet = false;
+            availableVoices.forEach((voice, i) => {
+                const option = document.createElement('option');
+                option.textContent = `${voice.name.replace('Microsoft', '').trim()} (${voice.lang})`;
+                option.value = i;
+                
+                if ((voice.name.includes('Natural') || voice.name.includes('Google') || voice.default) && voice.lang.includes('en') && !defaultSet) {
+                    option.selected = true;
+                    selectedVoiceIndex = i;
+                    defaultSet = true;
+                }
+                voiceSelect.appendChild(option);
+            });
         }
 
-        // 4. Listeners
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = populateVoiceList;
+        }
+        voiceSelect.addEventListener('change', (e) => selectedVoiceIndex = e.target.value);
+
+        function speakText(text) {
+            if (!isTtsEnabled || !('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel(); 
+            const utterance = new SpeechSynthesisUtterance(text);
+            if (availableVoices.length > 0) utterance.voice = availableVoices[selectedVoiceIndex];
+            setTimeout(() => window.speechSynthesis.speak(utterance), 50);
+        }
+
+        // ----------------------------------------------------
+        // 4. STT (Speech-to-Text) Setup
+        // ----------------------------------------------------
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            const recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+
+            recognition.onstart = () => {
+                micBtn.classList.add("recording");
+                msgInput.placeholder = "Listening...";
+                window.speechSynthesis.cancel(); 
+            };
+
+            recognition.onresult = (event) => {
+                msgInput.value = event.results[0][0].transcript;
+                send(); // Auto send on voice command
+            };
+
+            recognition.onerror = (e) => {
+                micBtn.classList.remove("recording");
+                msgInput.placeholder = "Mic error or disabled.";
+                setTimeout(() => msgInput.placeholder = "Message Ella...", 3000);
+            };
+
+            recognition.onend = () => {
+                micBtn.classList.remove("recording");
+                if(msgInput.placeholder === "Listening...") msgInput.placeholder = "Message Ella...";
+            };
+
+            micBtn.addEventListener("click", (e) => {
+                e.preventDefault();
+                micBtn.classList.contains("recording") ? recognition.stop() : recognition.start();
+            });
+        } else {
+            micBtn.style.display = 'none';
+        }
+
+        // ----------------------------------------------------
+        // 5. Input Listeners
+        // ----------------------------------------------------
         msgInput.addEventListener("keydown", e => {
             if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
         });
@@ -165,6 +313,36 @@
             msgInput.style.height = "auto";
             msgInput.style.height = Math.min(msgInput.scrollHeight, 200) + "px";
         });
+
+        // ----------------------------------------------------
+        // 6. Initialization & Auth Vault Gatekeeper
+        // ----------------------------------------------------
+        function init() {
+            populateVoiceList();
+            fetch("/settings").then(r => r.json()).then(s => { if(s.theme) document.body.className = s.theme; }).catch(()=>{});
+            loadMem();
+            if (!window.matchMedia("(pointer: coarse)").matches) msgInput.focus();
+        }
+
+        function triggerLogout() {
+            localStorage.removeItem('auth_vault_token');
+            window.location.href = `${AUTH_URL}/.netlify/functions/logout?redirect_uri=${encodeURIComponent(APP_URL)}`;
+        }
+
+        const AUTH_URL = "https://authvault.netlify.app"; 
+        const APP_URL = window.location.origin + window.location.pathname;
+        
+        if (window.location.hash.includes('access_token=')) {
+            localStorage.setItem('auth_vault_token', new URLSearchParams(window.location.hash.substring(1)).get('access_token'));
+            window.history.replaceState(null, null, window.location.pathname);
+        }
+        
+        if (!localStorage.getItem('auth_vault_token')) {
+            window.location.href = `${AUTH_URL}/.netlify/functions/authorize?redirect_uri=${encodeURIComponent(APP_URL)}`;
+        } else {
+            document.body.style.display = 'flex';
+            init(); 
+        }
     </script>
 </body>
 </html>

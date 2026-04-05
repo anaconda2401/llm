@@ -11,4 +11,4 @@ AUTH_VAULT_PUBLIC_KEY = os.getenv("AUTH_VAULT_PUBLIC_KEY", "").replace('\\n', '\
 SHARE_PUBLIC_MEMORY = os.getenv("SHARE_PUBLIC_MEMORY", "true").lower() in ('true', '1', 't')
 
 MODEL_NAME = "llama-3.1-8b-instant"
-SHORT_MEMORY_LIMIT = 50
+SHORT_MEMORY_LIMIT = 10

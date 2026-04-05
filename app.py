@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, render_template
+from flask_cors import CORS
 import jwt
 import threading
 import json
@@ -11,6 +12,7 @@ from llm import generate, extract_long_term_memory
 SETTINGS_FILE = "storage/settings.json"
 
 app = Flask(__name__)
+CORS(app)
 
 SYSTEM_PROMPT = {
     "role": "system",
@@ -202,6 +204,7 @@ def public_chat():
     return jsonify({
         "response": response
     })
+
 
 if __name__ == "__main__":
     app.run(debug=True) # Turn back to False when deploying
